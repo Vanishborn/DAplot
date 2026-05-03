@@ -1,0 +1,118 @@
+"""Tests for virplot.parsers."""
+
+import textwrap
+import numpy as np
+import pytest
+
+from virplot.parsers import parse_gff, parse_depth
+
+
+# parse_gff
+
+def test_parse_gff_basic(tmp_path):
+    gff = tmp_path / "test.gff3"
+    gff.write_text(textwrap.dedent("""\
+        ##gff-version 3
+        seq1\t.\tregion\t1\t1000\t.\t+\t.\tID=seq1
+        seq1\t.\tCDS\t100\t400\t.\t+\t0\tID=cds1;product=RdRp
+        seq1\t.\tCDS\t500\t900\t.\t+\t0\tID=cds2;product=CP
+    """))
+    seq_len, features = parse_gff(str(gff))
+    assert seq_len == 1000
+    assert len(features) == 2
+    assert features[0]["product"] == "RdRp"
+    assert features[0]["start"] == 100
+    assert features[0]["end"] == 400
+    assert features[1]["product"] == "CP"
+
+
+def test_parse_gff_unknown_product(tmp_path):
+    gff = tmp_path / "test.gff3"
+    gff.write_text(textwrap.dedent("""\
+        seq1\t.\tregion\t1\t500\t.\t+\t.\tID=seq1
+        seq1\t.\tCDS\t10\t200\t.\t+\t0\tID=cds1
+    """))
+    _, features = parse_gff(str(gff))
+    assert features[0]["product"] == "unknown"
+
+
+def test_parse_gff_no_region(tmp_path):
+    gff = tmp_path / "test.gff3"
+    gff.write_text("seq1\t.\tCDS\t10\t200\t.\t+\t0\tID=cds1;product=X\n")
+    with pytest.raises(SystemExit):
+        parse_gff(str(gff))
+
+
+def test_parse_gff_skips_non_cds(tmp_path):
+    gff = tmp_path / "test.gff3"
+    gff.write_text(textwrap.dedent("""\
+        seq1\t.\tregion\t1\t1000\t.\t+\t.\tID=seq1
+        seq1\t.\tgene\t100\t400\t.\t+\t.\tID=gene1
+        seq1\t.\tCDS\t100\t400\t.\t+\t0\tID=cds1;product=RdRp
+    """))
+    _, features = parse_gff(str(gff))
+    assert len(features) == 1
+
+
+# parse_depth
+
+def test_parse_depth_basic(tmp_path):
+    dep = tmp_path / "test.dep"
+    dep.write_text("seq1\t1\t10\nseq1\t2\t20\nseq1\t3\t5\n")
+    y, n = parse_depth(str(dep), 5)
+    assert n == 3
+    assert y.shape == (5,)
+    np.testing.assert_array_equal(y, [10, 20, 5, 0, 0])
+
+
+def test_parse_depth_out_of_range_ignored(tmp_path):
+    dep = tmp_path / "test.dep"
+    dep.write_text("seq1\t1\t10\nseq1\t99\t50\n")
+    y, n = parse_depth(str(dep), 3)
+    assert n == 2
+    np.testing.assert_array_equal(y, [10, 0, 0])
+
+
+def test_parse_depth_malformed_columns(tmp_path):
+    dep = tmp_path / "bad.dep"
+    dep.write_text("seq1\t1\n")  # only 2 columns
+    with pytest.raises(SystemExit):
+        parse_depth(str(dep), 10)
+
+
+def test_parse_depth_non_integer(tmp_path):
+    dep = tmp_path / "bad.dep"
+    dep.write_text("seq1\tabc\t10\n")
+    with pytest.raises(SystemExit):
+        parse_depth(str(dep), 10)
+
+
+def test_parse_depth_empty(tmp_path):
+    dep = tmp_path / "empty.dep"
+    dep.write_text("")
+    y, n = parse_depth(str(dep), 5)
+    assert n == 0
+    np.testing.assert_array_equal(y, [0, 0, 0, 0, 0])
+
+
+def test_parse_depth_boundary_positions(tmp_path):
+    """Position at seq_len is valid; position 0 is out of range (1-based)."""
+    dep = tmp_path / "boundary.dep"
+    dep.write_text("seq1\t0\t99\nseq1\t5\t42\n")
+    y, n = parse_depth(str(dep), 5)
+    assert n == 2
+    # pos 0 is out of 1-based range → ignored; pos 5 == seq_len → valid
+    np.testing.assert_array_equal(y, [0, 0, 0, 0, 42])
+
+
+def test_parse_gff_skips_malformed_columns(tmp_path):
+    """Lines with fewer than 9 tab-separated columns are silently skipped."""
+    gff = tmp_path / "bad.gff3"
+    gff.write_text(
+        "seq1\t.\tregion\t1\t500\t.\t+\t.\tID=seq1\n"
+        "this line only has three\tcolumns\there\n"
+        "seq1\t.\tCDS\t10\t200\t.\t+\t0\tID=cds1;product=RdRp\n"
+    )
+    seq_len, features = parse_gff(str(gff))
+    assert seq_len == 500
+    assert len(features) == 1

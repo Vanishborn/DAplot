@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 title: "VirPlot"
-version: 1.0.0
-date-released: 2025-08-24
+version: 2.0.0
+date-released: 2026-05-03
 authors:
   - family-names: Li
     given-names: Haoran
@@ -19,6 +19,6 @@ preferred-citation:
       affiliation: University of California, Davis
       orcid: "https://orcid.org/0009-0003-6643-9788"
   title: "VirPlot"
-  version: 1.0.0
-  date-released: 2025-08-24
+  version: 2.0.0
+  date-released: 2026-05-03
   url: "https://github.com/ucdavis/VirPlot"

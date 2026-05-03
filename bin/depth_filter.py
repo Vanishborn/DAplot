@@ -27,6 +27,6 @@ filter_seq = args.seq
 
 with open(input_file, "r") as infile, open(output_file, "w") as outfile:
 	for line in infile:
-		parts = line.split()
+		parts = line.split('\t')
 		if parts and parts[0] == filter_seq:
 			outfile.write(line)

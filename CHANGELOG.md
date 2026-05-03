@@ -1,0 +1,62 @@
+# Changelog
+
+All notable changes to VirPlot will be documented in this file.
+
+Format based on [Keep a Changelog](https://keepachangelog.com/).
+
+---
+
+## [2.0.0] — 2026-05-03
+
+### Added
+
+- Installable Python package (`pip install .`) with `virplot` entry point
+- PEP 621 `pyproject.toml` build metadata with setuptools backend
+- `python -m virplot` support via `__main__.py`
+- `-V` / `--version` flag
+- `-f` / `--format {svg,pdf,png}` flag replacing `--Opdf` / `--Opng`
+- `-v` / `--verbose` flag for debug-level logging
+- Input validation: depth file format, tab delimiters, cross-file position counts
+- YAML schema warnings for unknown keys, info for missing keys using defaults
+- `Settings` dataclass for typed configuration
+- Type hints on all function signatures
+- Logging via `logging` module with `[VirPlot]` prefix (INFO omits level tag)
+- Named constants for layout parameters in `plotting.py`
+- Unit tests (26 tests across parsers, analysis, settings, CLI formatter)
+- Synthetic sample data in `examples/`
+- `examples/spec.yml` template configuration
+- `CHANGELOG.md`
+
+### Changed
+
+- Restructured from monolithic `bin/virplot` script to `src/virplot/` package
+- `parse_depth()` now takes `seq_len` and returns `(np.ndarray, n_entries)` directly, without intermediate dict
+- Depth parsing enforces tab-delimited 3-column format with line-number errors
+- `load_settings()` returns a `Settings` dataclass instead of a tuple
+- Log output cleaned: INFO messages omit redundant level prefix
+- `figsize` and `height_ratios` extracted as module-level constants
+- `CITATION.cff` updated to v2.0.0
+- `README.md` rewritten for new package structure and pip workflow
+- `.gitignore` cleaned up, removed irrelevant framework sections
+
+### Removed
+
+- `--Opdf` / `--Opng` flags (replaced by `--format`)
+- `bin/virplot` monolithic script
+- `bin/env.yml` (superseded by pip workflow)
+- `bin/spec.yml` (moved to `examples/spec.yml`)
+- `build_depth_array()` function (merged into `parse_depth()`)
+- `print()` statements (replaced by `logging`)
+
+---
+
+## [1.0.0] — 2025-08-24
+
+### Added
+
+- Initial release
+- Combined annotation + depth plot from GFF3 and samtools depth files
+- YAML-based color and style configuration
+- Stacked area chart for multiple depth files
+- Coverage interval and gap analysis with CSV reports
+- Supplementary scripts: `depth_filter.py`, `depth_merger.py`
