@@ -45,11 +45,15 @@ A sample GFF3, depth file, and YAML configuration are included in `examples/`:
 ```bash
 # Basic plot
 virplot -g examples/sample.gff3 -d examples/sample.dep -y examples/spec.yml
+```
 
+```bash
 # PNG with smoothing, gap shading, and grid
 virplot -g examples/sample.gff3 -d examples/sample.dep -y examples/spec.yml \
   --smooth --shade-breaks --grid -f png
+```
 
+```bash
 # PDF with custom name and output directory
 virplot -g genome.gff3 -d depth.dep -y spec.yml \
   -f pdf --name my_virus -o results/
